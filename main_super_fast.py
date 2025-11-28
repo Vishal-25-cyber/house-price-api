@@ -1,9 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import List, Dict
+from typing import List
 import os
-import json
 from datetime import datetime
 
 # Simple model without external dependencies
@@ -25,22 +23,12 @@ class SimplePredictionModel:
 app = FastAPI(
     title="🏠 AI House Price Predictor",
     description="Fast California house price prediction API",
-    version="2.2.0"
+    version="3.0.0"
 )
 
 # Initialize model
 model = SimplePredictionModel()
 prediction_history = []
-
-class HousePredictionInput(BaseModel):
-    data: List[float]
-    location: str = "California"
-
-class PredictionResponse(BaseModel):
-    prediction_formatted: str
-    confidence: str
-    location_insight: str
-    timestamp: str
 
 @app.get("/", response_class=HTMLResponse)
 def root():
@@ -69,7 +57,7 @@ def root():
                 display: inline-block; padding: 15px 30px; margin: 10px;
                 background: linear-gradient(45deg, #667eea, #764ba2);
                 color: white; text-decoration: none; border-radius: 50px;
-                font-weight: bold; transition: transform 0.3s;
+                font-weight: bold; transition: transform 0.3s; border: none; cursor: pointer;
             }
             .btn:hover { transform: translateY(-2px); }
             .demo { background: #e9ecef; padding: 30px; border-radius: 15px; margin: 20px 0; }
@@ -191,16 +179,20 @@ def root():
     </html>
     """
 
-@app.post("/predict", response_model=PredictionResponse)
-def predict(input_data: HousePredictionInput):
+@app.post("/predict")
+def predict(request_data: dict):
     try:
+        # Extract data from request
+        data = request_data.get("data", [])
+        location = request_data.get("location", "California")
+        
         # Make prediction
-        pred = model.predict(input_data.data)
+        pred = model.predict(data)
         prediction_value = pred[0]
         actual_price = prediction_value * 100000
         
         # Generate insights
-        lat, lng = input_data.data[6], input_data.data[7]
+        lat, lng = data[6], data[7]
         
         if lat > 37.5 and lng < -122:
             location_insight = "🌉 San Francisco Bay Area - Premium tech hub location"
@@ -218,7 +210,7 @@ def predict(input_data: HousePredictionInput):
         # Store prediction
         prediction_history.append({
             "price": actual_price,
-            "location": input_data.location,
+            "location": location,
             "timestamp": datetime.now().isoformat()
         })
         
@@ -226,12 +218,12 @@ def predict(input_data: HousePredictionInput):
         if len(prediction_history) > 50:
             prediction_history.pop(0)
         
-        return PredictionResponse(
-            prediction_formatted=f"${actual_price:,.2f}",
-            confidence=confidence,
-            location_insight=location_insight,
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
+        return {
+            "prediction_formatted": f"${actual_price:,.2f}",
+            "confidence": confidence,
+            "location_insight": location_insight,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -241,7 +233,7 @@ def health():
         "status": "✅ Healthy",
         "predictions_made": len(prediction_history),
         "avg_price": f"${sum(p['price'] for p in prediction_history[-10:]) / min(10, len(prediction_history)):,.0f}" if prediction_history else "N/A",
-        "version": "2.1.0",
+        "version": "3.0.0",
         "features": ["Lightning Fast", "No External Dependencies", "Mobile Ready"]
     }
 
@@ -260,8 +252,8 @@ def get_stats():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 10000))
-    print("🚀 Lightning Fast House Price Predictor Starting...")
-    print(f"⚡ Compatible with all Python versions - Ultra fast deployment!")
+    print("🚀 Ultra Compatible House Price Predictor Starting...")
+    print(f"⚡ Zero compilation issues - Works on all Python versions!")
     print(f"🌐 App: http://localhost:{port}")
     print(f"📚 Docs: http://localhost:{port}/docs")
     uvicorn.run(app, host="0.0.0.0", port=port)

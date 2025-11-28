@@ -1,1 +1,1 @@
-web: python main_fast.py
+web: python main_super_fast.py
