@@ -7,6 +7,7 @@ import gradio as gr
 import threading
 import uvicorn
 import numpy as np
+import os
 
 # Initialize FastAPI app
 app = FastAPI(title="House Price Prediction API", version="1.0.0")
@@ -136,8 +137,12 @@ app = gr.mount_gradio_app(app, iface, path="/gradio")
 if __name__ == "__main__":
     print("🏠 Starting House Price Prediction API...")
     print("📊 Model loaded successfully!")
-    print("🌐 FastAPI docs: http://localhost:10000/docs")
-    print("🎯 Gradio UI: http://localhost:10000/gradio")
+    
+    # Get port from environment variable (Render sets this automatically)
+    port = int(os.getenv("PORT", 10000))
+    
+    print(f"🌐 FastAPI docs will be at: /docs")
+    print(f"🎯 Gradio UI will be at: /gradio")
     
     # Run the FastAPI app
-    uvicorn.run(app, host="0.0.0.0", port=10000)
+    uvicorn.run(app, host="0.0.0.0", port=port)
