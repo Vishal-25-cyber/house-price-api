@@ -390,21 +390,24 @@ def get_price_history():
     return history_text
 
 # Create enhanced Gradio interface
-with gr.Blocks(
-    title="🏠 AI House Price Predictor",
-    css="""
-    .gradio-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    .main-header {
-        text-align: center;
-        padding: 20px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-    """
-) as iface:
+custom_css = """
+.gradio-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.main-header {
+    text-align: center;
+    padding: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+"""
+
+iface = gr.Blocks(
+    title="🏠 AI House Price Predictor"
+)
+
+with iface:
     
     gr.HTML("""
     <div class="main-header">
