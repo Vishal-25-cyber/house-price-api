@@ -13,8 +13,8 @@ git commit -m "Initial commit - House Price Prediction API with FastAPI and Grad
 # Set main branch
 git branch -M main
 
-# Add remote repository (replace YOUR_USERNAME with your GitHub username)
-git remote add origin https://github.com/YOUR_USERNAME/house-price-api.git
+# Add remote repository
+git remote add origin https://github.com/Vishal-2006-spec/house-price-api.git
 
 # Push to GitHub
 git push -u origin main

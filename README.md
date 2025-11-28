@@ -96,7 +96,7 @@ git init
 git add .
 git commit -m "Initial commit - House Price Prediction API"
 git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/house-price-api.git
+git remote add origin https://github.com/Vishal-2006-spec/house-price-api.git
 git push -u origin main
 ```
 
