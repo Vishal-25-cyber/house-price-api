@@ -1,0 +1,27 @@
+# Git Setup Script for Deployment
+# Run these commands in PowerShell to push to GitHub
+
+# Initialize git repository
+git init
+
+# Add all files
+git add .
+
+# Create initial commit
+git commit -m "Initial commit - House Price Prediction API with FastAPI and Gradio"
+
+# Set main branch
+git branch -M main
+
+# Add remote repository (replace YOUR_USERNAME with your GitHub username)
+git remote add origin https://github.com/YOUR_USERNAME/house-price-api.git
+
+# Push to GitHub
+git push -u origin main
+
+# After pushing to GitHub:
+# 1. Go to render.com
+# 2. Create new Web Service
+# 3. Connect your GitHub repo
+# 4. Set start command: uvicorn main:app --host=0.0.0.0 --port=10000
+# 5. Deploy for free!
