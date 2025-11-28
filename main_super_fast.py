@@ -1,8 +1,58 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
-from typing import List
+from fastapi.responses import HTMLResponse, JSONResponse
+from typing import List, Dict, Optional
 import os
-from datetime import datetime
+import json
+import statistics
+from datetime import datetime, timedelta
+import random
+
+# Market insights and analytics
+class MarketInsights:
+    def __init__(self):
+        self.market_data = {
+            "bay_area": {"avg_price": 850000, "growth": 0.08, "inventory": "Low"},
+            "los_angeles": {"avg_price": 720000, "growth": 0.06, "inventory": "Medium"},
+            "san_diego": {"avg_price": 680000, "growth": 0.07, "inventory": "Low"},
+            "central_valley": {"avg_price": 420000, "growth": 0.04, "inventory": "High"}
+        }
+    
+    def get_region_insights(self, lat: float, lng: float) -> Dict:
+        if lat > 37.5 and lng < -122:
+            region = "bay_area"
+            name = "San Francisco Bay Area"
+        elif lat > 34 and lat < 37:
+            region = "los_angeles"
+            name = "Los Angeles Metropolitan"
+        elif lat > 32.5 and lat < 34:
+            region = "san_diego"
+            name = "San Diego County"
+        else:
+            region = "central_valley"
+            name = "Central California"
+        
+        data = self.market_data[region]
+        return {
+            "region": name,
+            "avg_price": data["avg_price"],
+            "growth_rate": f"{data['growth']*100:.1f}%",
+            "inventory_level": data["inventory"],
+            "market_trend": "🔥 Hot Market" if data["inventory"] == "Low" else "📊 Balanced Market" if data["inventory"] == "Medium" else "💰 Buyer's Market"
+        }
+    
+    def get_market_summary(self) -> Dict:
+        total_predictions = len(prediction_history)
+        if total_predictions == 0:
+            return {"message": "No market data available yet"}
+        
+        recent_prices = [p["price"] for p in prediction_history[-50:]]
+        return {
+            "total_predictions": total_predictions,
+            "avg_price": statistics.mean(recent_prices),
+            "median_price": statistics.median(recent_prices),
+            "price_range": {"min": min(recent_prices), "max": max(recent_prices)},
+            "market_activity": "🔥 Very Active" if total_predictions > 100 else "📈 Active" if total_predictions > 50 else "📊 Growing"
+        }
 
 # Simple model without external dependencies
 class SimplePredictionModel:
@@ -22,13 +72,30 @@ class SimplePredictionModel:
 
 app = FastAPI(
     title="🏠 PriceGenius AI - California Real Estate Predictor",
-    description="Advanced California real estate price prediction API",
-    version="4.0.0"
+    description="Advanced California real estate prediction with market analytics and insights",
+    version="5.0.0"
 )
 
-# Initialize model
+# Initialize model and services
 model = SimplePredictionModel()
+market_insights = MarketInsights()
 prediction_history = []
+
+# Enhanced prediction data structure
+class PredictionData:
+    def __init__(self, features: List[float], location: str = "California"):
+        self.features = features
+        self.location = location
+        self.timestamp = datetime.now()
+        self.region_data = market_insights.get_region_insights(features[6], features[7])
+    
+    def to_dict(self) -> Dict:
+        return {
+            "features": self.features,
+            "location": self.location,
+            "timestamp": self.timestamp.isoformat(),
+            "region": self.region_data["region"]
+        }
 
 @app.get("/", response_class=HTMLResponse)
 def root():
@@ -505,6 +572,141 @@ def root():
                 }
             }
 
+            /* Dashboard Components */
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin: 30px 0;
+            }
+
+            .metric-card {
+                background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+                border-radius: 16px;
+                padding: 24px;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                border: 1px solid rgba(226, 232, 240, 0.5);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .metric-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                border-color: var(--primary-color);
+            }
+
+            .metric-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: var(--gradient-primary);
+                transform: scaleX(0);
+                transition: transform 0.3s ease;
+            }
+
+            .metric-card:hover::before {
+                transform: scaleX(1);
+            }
+
+            .metric-icon {
+                font-size: 2rem;
+                color: var(--primary-color);
+                min-width: 60px;
+                text-align: center;
+            }
+
+            .metric-content {
+                flex: 1;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--dark-color);
+                margin-bottom: 4px;
+            }
+
+            .metric-label {
+                font-size: 0.9rem;
+                color: #64748b;
+                font-weight: 500;
+            }
+
+            .prediction-history {
+                background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
+                border-radius: 16px;
+                padding: 24px;
+                margin-top: 20px;
+                border: 1px solid rgba(226, 232, 240, 0.5);
+            }
+
+            .history-list {
+                display: grid;
+                gap: 12px;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            .history-item {
+                background: white;
+                border-radius: 8px;
+                padding: 16px;
+                border: 1px solid #e2e8f0;
+                display: grid;
+                grid-template-columns: auto 1fr auto auto;
+                gap: 16px;
+                align-items: center;
+                transition: all 0.3s ease;
+            }
+
+            .history-item:hover {
+                transform: translateX(4px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                border-color: var(--primary-color);
+            }
+
+            .history-price {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: var(--success-color);
+            }
+
+            .history-region {
+                font-size: 0.9rem;
+                color: #64748b;
+            }
+
+            .history-time {
+                font-size: 0.8rem;
+                color: #94a3b8;
+            }
+
+            .history-confidence {
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-size: 0.8rem;
+                font-weight: 500;
+                background: rgba(16, 185, 129, 0.1);
+                color: var(--success-color);
+            }
+
+            /* Enhanced animations */
+            @keyframes countUp {
+                from { transform: scale(0.5); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+
+            .animate-count {
+                animation: countUp 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            }
+
             /* Accessibility */
             @media (prefers-reduced-motion: reduce) {
                 *, *::before, *::after {
@@ -686,6 +888,61 @@ def root():
                     </div>
                 </div>
 
+                <!-- Market Insights Dashboard -->
+                <div class="prediction-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        Market Intelligence Dashboard
+                    </h2>
+                    
+                    <div class="dashboard-grid">
+                        <div class="metric-card" id="totalPredictions">
+                            <div class="metric-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value">0</div>
+                                <div class="metric-label">Total Predictions</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card" id="avgPrice">
+                            <div class="metric-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value">$0</div>
+                                <div class="metric-label">Average Price</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card" id="marketTrend">
+                            <div class="metric-icon">
+                                <i class="fas fa-trending-up"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value">📊</div>
+                                <div class="metric-label">Market Status</div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card" id="regionInsight">
+                            <div class="metric-icon">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value">🌍</div>
+                                <div class="metric-label">Top Region</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-history" id="predictionHistory" style="display: none;">
+                        <h3 style="margin-bottom: 20px; color: var(--dark-color);">📊 Recent Predictions</h3>
+                        <div class="history-list" id="historyList"></div>
+                    </div>
+                </div>
+
                 <!-- Action Buttons -->
                 <div class="action-buttons">
                     <a href="/docs" class="action-btn">
@@ -698,8 +955,12 @@ def root():
                     </a>
                     <a href="/stats" class="action-btn">
                         <i class="fas fa-chart-bar"></i>
-                        Analytics
+                        Full Analytics
                     </a>
+                    <button onclick="toggleHistory()" class="action-btn" id="historyBtn">
+                        <i class="fas fa-history"></i>
+                        View History
+                    </button>
                 </div>
             </div>
 
@@ -710,6 +971,13 @@ def root():
         </div>
 
         <script>
+            let dashboardData = {
+                totalPredictions: 0,
+                avgPrice: 0,
+                marketTrend: '📊 Getting Started',
+                topRegion: '🌍 California'
+            };
+
             async function predict() {
                 const btn = document.getElementById('predictBtn');
                 const resultCard = document.getElementById('result');
@@ -745,11 +1013,19 @@ def root():
                     document.getElementById('resultLocation').textContent = result.location_insight;
                     document.getElementById('resultTime').textContent = result.timestamp;
                     
+                    // Update market insights if available
+                    if (result.market_insights) {
+                        updateMarketInsights(result.market_insights);
+                    }
+                    
                     // Show result with animation
                     setTimeout(() => {
                         resultCard.style.display = 'block';
                         resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 300);
+                    
+                    // Update dashboard
+                    await updateDashboard();
                     
                 } catch (error) {
                     // Show error state
@@ -765,6 +1041,107 @@ def root():
                     setTimeout(() => {
                         btn.classList.remove('loading');
                     }, 1000);
+                }
+            }
+
+            async function updateDashboard() {
+                try {
+                    const response = await fetch('/analytics');
+                    const data = await response.json();
+                    
+                    // Animate counter updates
+                    animateCounter('totalPredictions', dashboardData.totalPredictions, data.total_predictions || 0);
+                    animateCounter('avgPrice', 0, data.avg_price || 0, true);
+                    
+                    // Update text values
+                    document.querySelector('#marketTrend .metric-value').textContent = data.market_status || '📊 Active';
+                    document.querySelector('#regionInsight .metric-value').textContent = data.top_region || '🌍 California';
+                    
+                    dashboardData = {
+                        totalPredictions: data.total_predictions || 0,
+                        avgPrice: data.avg_price || 0,
+                        marketTrend: data.market_status || '📊 Active',
+                        topRegion: data.top_region || '🌍 California'
+                    };
+                } catch (error) {
+                    console.log('Dashboard update skipped:', error.message);
+                }
+            }
+
+            function animateCounter(elementId, startVal, endVal, isCurrency = false) {
+                const element = document.querySelector(`#${elementId} .metric-value`);
+                const duration = 1000;
+                const startTime = Date.now();
+                
+                function animate() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const currentVal = startVal + (endVal - startVal) * easeOut(progress);
+                    
+                    if (isCurrency) {
+                        element.textContent = `$${Math.round(currentVal).toLocaleString()}`;
+                    } else {
+                        element.textContent = Math.round(currentVal).toLocaleString();
+                    }
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                }
+                
+                element.classList.add('animate-count');
+                animate();
+            }
+
+            function easeOut(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+
+            async function toggleHistory() {
+                const historyDiv = document.getElementById('predictionHistory');
+                const btn = document.getElementById('historyBtn');
+                
+                if (historyDiv.style.display === 'none') {
+                    // Load and show history
+                    try {
+                        const response = await fetch('/stats');
+                        const data = await response.json();
+                        
+                        const historyList = document.getElementById('historyList');
+                        historyList.innerHTML = '';
+                        
+                        if (data.latest_predictions && data.latest_predictions.length > 0) {
+                            data.latest_predictions.forEach(pred => {
+                                const item = document.createElement('div');
+                                item.className = 'history-item';
+                                item.innerHTML = `
+                                    <div class="history-price">${pred.price}</div>
+                                    <div class="history-region">📍 California</div>
+                                    <div class="history-time">${pred.time}</div>
+                                    <div class="history-confidence">✓ Verified</div>
+                                `;
+                                historyList.appendChild(item);
+                            });
+                        } else {
+                            historyList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">No predictions yet. Make your first prediction above!</div>';
+                        }
+                        
+                        historyDiv.style.display = 'block';
+                        btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide History';
+                    } catch (error) {
+                        console.log('History load failed:', error.message);
+                    }
+                } else {
+                    // Hide history
+                    historyDiv.style.display = 'none';
+                    btn.innerHTML = '<i class="fas fa-history"></i> View History';
+                }
+            }
+
+            function updateMarketInsights(insights) {
+                if (insights.region_data) {
+                    const regionCard = document.querySelector('#regionInsight .metric-value');
+                    regionCard.textContent = `🏙️ ${insights.region_data.region.split(' ')[0]}`;
                 }
             }
 
@@ -819,43 +1196,61 @@ def predict(request_data: dict):
         data = request_data.get("data", [])
         location = request_data.get("location", "California")
         
+        # Create prediction data object
+        pred_data = PredictionData(data, location)
+        
         # Make prediction
         pred = model.predict(data)
         prediction_value = pred[0]
         actual_price = prediction_value * 100000
         
-        # Generate insights
-        lat, lng = data[6], data[7]
+        # Get enhanced insights
+        region_insights = market_insights.get_region_insights(data[6], data[7])
         
-        if lat > 37.5 and lng < -122:
-            location_insight = "🌉 San Francisco Bay Area - Premium tech hub location"
+        # Generate confidence based on region and data quality
+        if region_insights["region"] == "San Francisco Bay Area":
             confidence = "🎯 High Confidence (85%)"
-        elif lat > 34 and lat < 37:
-            location_insight = "☀️ Los Angeles Area - Entertainment district premium"
+            location_insight = "🌉 San Francisco Bay Area - Premium tech hub location"
+        elif region_insights["region"] == "Los Angeles Metropolitan":
             confidence = "📊 Good Confidence (75%)"
-        elif lat > 32.5 and lat < 34:
-            location_insight = "🏖️ San Diego Region - Coastal lifestyle premium"
+            location_insight = "☀️ Los Angeles Area - Entertainment district premium"
+        elif region_insights["region"] == "San Diego County":
             confidence = "📈 Moderate Confidence (70%)"
+            location_insight = "🏖️ San Diego Region - Coastal lifestyle premium"
         else:
-            location_insight = "🏔️ Central/Northern California - Diverse market"
             confidence = "📋 Standard Confidence (65%)"
+            location_insight = "🏔️ Central California - Diverse market opportunity"
         
-        # Store prediction
-        prediction_history.append({
+        # Enhanced prediction record
+        prediction_record = {
             "price": actual_price,
             "location": location,
-            "timestamp": datetime.now().isoformat()
-        })
+            "region": region_insights["region"],
+            "confidence_score": confidence,
+            "market_trend": region_insights["market_trend"],
+            "timestamp": datetime.now().isoformat(),
+            "features": data,
+            "region_data": region_insights
+        }
         
-        # Keep only last 50 predictions
-        if len(prediction_history) > 50:
+        # Store prediction
+        prediction_history.append(prediction_record)
+        
+        # Keep only last 100 predictions for better analytics
+        if len(prediction_history) > 100:
             prediction_history.pop(0)
         
+        # Return enhanced response
         return {
             "prediction_formatted": f"${actual_price:,.2f}",
             "confidence": confidence,
             "location_insight": location_insight,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "market_insights": {
+                "region_data": region_insights,
+                "market_summary": market_insights.get_market_summary()
+            },
+            "prediction_id": len(prediction_history)
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -866,8 +1261,59 @@ def health():
         "status": "✅ Healthy",
         "predictions_made": len(prediction_history),
         "avg_price": f"${sum(p['price'] for p in prediction_history[-10:]) / min(10, len(prediction_history)):,.0f}" if prediction_history else "N/A",
-        "version": "4.0.0",
+        "version": "5.0.0",
         "features": ["Lightning Fast", "No External Dependencies", "Mobile Ready"]
+    }
+
+@app.get("/analytics")
+def get_analytics():
+    if not prediction_history:
+        return {
+            "total_predictions": 0,
+            "avg_price": 0,
+            "market_status": "📊 Getting Started",
+            "top_region": "🌍 California",
+            "growth_trend": "📈 Ready to Analyze"
+        }
+    
+    # Calculate analytics
+    total = len(prediction_history)
+    recent_30 = prediction_history[-30:] if len(prediction_history) >= 30 else prediction_history
+    prices = [p['price'] for p in recent_30]
+    avg_price = sum(prices) / len(prices)
+    
+    # Region analysis
+    regions = {}
+    for pred in prediction_history[-50:]:
+        region = pred.get('region', 'Unknown')
+        if region in regions:
+            regions[region] += 1
+        else:
+            regions[region] = 1
+    
+    top_region = max(regions.items(), key=lambda x: x[1])[0] if regions else "California"
+    
+    # Market status
+    if total > 100:
+        market_status = "🔥 Very Active Market"
+    elif total > 50:
+        market_status = "📈 Active Market"
+    elif total > 20:
+        market_status = "📊 Growing Market"
+    else:
+        market_status = "🌱 Emerging Market"
+    
+    return {
+        "total_predictions": total,
+        "avg_price": int(avg_price),
+        "market_status": market_status,
+        "top_region": f"🏙️ {top_region.split(' ')[0] if ' ' in top_region else top_region}",
+        "growth_trend": "📈 Positive" if len(prediction_history) > 10 else "📊 Building Data",
+        "price_range": {
+            "min": int(min(prices)),
+            "max": int(max(prices)),
+            "median": int(statistics.median(prices))
+        } if prices else {}
     }
 
 @app.get("/stats")
@@ -879,8 +1325,33 @@ def get_stats():
     return {
         "total_predictions": len(prediction_history),
         "recent_average": f"${sum(p['price'] for p in recent) / len(recent):,.0f}",
-        "latest_predictions": [{"price": f"${p['price']:,.0f}", "time": p['timestamp'][:16]} for p in recent]
+        "latest_predictions": [{"price": f"${p['price']:,.0f}", "time": p['timestamp'][:16]} for p in recent],
+        "market_insights": market_insights.get_market_summary()
     }
+
+@app.get("/market-insights/{region}")
+def get_region_insights(region: str):
+    """Get detailed insights for a specific region"""
+    # Sample coordinates for different regions
+    region_coords = {
+        "bay_area": (37.7749, -122.4194),
+        "los_angeles": (34.0522, -118.2437),
+        "san_diego": (32.7157, -117.1611),
+        "central_valley": (36.7378, -119.7871)
+    }
+    
+    if region.lower() not in region_coords:
+        raise HTTPException(status_code=404, detail="Region not found")
+    
+    lat, lng = region_coords[region.lower()]
+    insights = market_insights.get_region_insights(lat, lng)
+    
+    # Add prediction count for this region
+    region_predictions = [p for p in prediction_history if region.lower().replace('_', ' ') in p.get('region', '').lower()]
+    insights["prediction_count"] = len(region_predictions)
+    insights["recent_activity"] = len([p for p in region_predictions if datetime.fromisoformat(p['timestamp']).date() == datetime.now().date()])
+    
+    return insights
 
 if __name__ == "__main__":
     import uvicorn
