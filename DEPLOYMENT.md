@@ -4,11 +4,10 @@
 
 Your repository now has all the necessary files for successful Render.com deployment:
 
-### 📁 **New Files Added:**
-- `build.sh` - Installation script for dependencies
+### 📁 **Deployment Files:**
 - `Procfile` - Process configuration for Render
-- Updated `requirements.txt` - Added `gunicorn` and `uvicorn[standard]`
-- Updated `main.py` - Uses PORT environment variable
+- `requirements.txt` - Includes all dependencies including `gunicorn` and `uvicorn[standard]`
+- `main.py` - Uses PORT environment variable for Render compatibility
 
 ### 🌐 **Deploy on Render.com:**
 
@@ -23,7 +22,7 @@ Your repository now has all the necessary files for successful Render.com deploy
    ```
    Name: house-price-predictor
    Runtime: Python 3
-   Build Command: ./build.sh
+   Build Command: pip install -r requirements.txt
    Start Command: uvicorn main:app --host=0.0.0.0 --port=$PORT
    ```
 
@@ -33,11 +32,11 @@ Your repository now has all the necessary files for successful Render.com deploy
 
 6. **Click "Deploy"**
 
-### 🔧 **What's Fixed:**
+### 🔧 **What's Configured:**
 
-1. **Dependencies Installation**: `build.sh` script ensures all packages are installed
-2. **Port Configuration**: App now uses `$PORT` environment variable from Render
-3. **Production Server**: Added `gunicorn` and `uvicorn[standard]` for better performance
+1. **Automatic Dependencies**: Render will automatically install from `requirements.txt`
+2. **Port Configuration**: App uses `$PORT` environment variable from Render
+3. **Production Server**: Includes `gunicorn` and `uvicorn[standard]` for stability
 4. **Process Management**: `Procfile` defines the web process
 
 ### 📊 **Expected Results:**
